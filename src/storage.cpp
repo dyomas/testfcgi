@@ -213,10 +213,10 @@ void Storage::m_add_item(const dataItem &itm)
         indexKey key = {lexeme_id, first_key};
         if (m_index.find(key) == m_index.end())
         {
-          m_index[key] = 0;
+          m_index.insert(index_t::value_type(key, 0));
         }
         indexKey key2 = {lexeme_id, offset};
-        m_index[key2] = coord;
+        m_index.insert(index_t::value_type(key2, coord));
 
         pch_start = NULL;
         coord ++;

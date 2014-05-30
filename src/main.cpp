@@ -128,6 +128,7 @@ void search(const strings_t &queries, const string &data)
       << searcher.lexemes_found() << '/' << searcher.lexemes_total() << endl
     ;
     searcher.search();
+    searcher.dump_results(cout);
   }
 }
 

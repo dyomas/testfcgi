@@ -38,7 +38,7 @@ public:
   };
 
   typedef std::map<std::string, dictItem> dict_t;
-  typedef std::map<indexKey, uint8_t> index_t;
+  typedef std::multimap<indexKey, uint8_t> index_t;
   typedef std::vector<dataItem> data_t;
 
   const dict_t &dict() const;
