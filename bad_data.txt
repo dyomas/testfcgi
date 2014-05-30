@@ -1,0 +1,13 @@
+#kate: tab-indents on; replace-tabs off; tab-width 30;
+#empty line
+
+#too many fields
+d	h	1	h	
+#insufficient fields
+w	w
+#valid data
+Цыгане дружною толпою	http://exxample.com/	666
+#empty fields
+		
+#invalid rating
+f	e	9r
