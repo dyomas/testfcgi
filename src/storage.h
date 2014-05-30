@@ -34,11 +34,12 @@ public:
     size_t
         rating
       , line
+      , lexemes
     ;
   };
 
   typedef std::map<std::string, dictItem> dict_t;
-  typedef std::multimap<indexKey, uint8_t> index_t;
+  typedef std::multimap<indexKey, size_t> index_t;
   typedef std::vector<dataItem> data_t;
 
   const dict_t &dict() const;
@@ -57,7 +58,7 @@ private:
   data_t m_data;
 
   void m_init(const std::string &);
-  void m_add_item(const dataItem &);
+  size_t m_split_and_indexate_lexeme(const char *);
 };
 
 bool operator < (const Storage::indexKey &, const Storage::indexKey &);

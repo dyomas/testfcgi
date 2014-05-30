@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <iomanip>
+#include <sstream>
 
 #include "logger.h"
 #include "searcher.h"
@@ -18,7 +19,7 @@ size_t Searcher::lexemes_total() const
 
 size_t Searcher::lexemes_found() const
 {
-  return m_iters.size();
+  return m_cogwheels.size();
 }
 
 const Searcher::results_t &Searcher::results() const
@@ -32,7 +33,7 @@ void Searcher::dump_results(ostream &os) const
   {
     const resultKey &key = iter->first;
     const resultData &value = iter->second;
-    os << setw(3) << key.cnt << setw(6) << key.raiting << ' ' << value.raw << " (" << value.line << "/" << value.offset << ", [";
+    os << setw(3) << key.cnt << setw(6) << key.raiting << setw(6) << static_cast<uint16_t>(key.mark) << ' ' << value.raw << " (" << value.line << "/" << value.offset << ", [";
     bool delimiter = false;
     for (coords_t::const_iterator iter_coord = value.coords.begin(), iter_coord_end = value.coords.end(); iter_coord != iter_coord_end; iter_coord ++)
     {
@@ -40,7 +41,7 @@ void Searcher::dump_results(ostream &os) const
       {
         os << ", ";
       }
-      os << static_cast<uint16_t>(*iter_coord);
+      os << *iter_coord;
       delimiter = true;
     }
     os
@@ -51,14 +52,14 @@ void Searcher::dump_results(ostream &os) const
 
 void Searcher::search()
 {
-  LOG_DEBUG("Iterators " << m_iters.size());
+  LOG_DEBUG("Iterators " << m_cogwheels.size());
 
-  if (!m_iters.size())
+  if (!m_cogwheels.size())
   {
     return;
   }
 
-  size_t rcs[m_iters.size()];
+  size_t rcs[m_cogwheels.size()];
 
   while (true)
   {
@@ -69,48 +70,71 @@ void Searcher::search()
       , iter_num = 0
     ;
 
-    for (iters_t::const_iterator iter = m_iters.begin(), iter_end = m_iters.end(); iter != iter_end; iter ++)
+    /*
+    Из всех незакрытых итераторов найти такие, что указывают на ближайшую к началу файла строку. При идеальном совпадении всех лексем все итераторы будут смотреть в одну строку. В наихудшем случае, только один "отстающий" итератор будет указывать на какую то строку
+    */
+    for (cogwheels_t::const_iterator cogwheel = m_cogwheels.begin(), cogwheel_end = m_cogwheels.end(); cogwheel != cogwheel_end; cogwheel ++)
     {
-      const iteratorData &itm = *iter;
-      if (!itm.end)
+      if (!cogwheel->end)
       {
+        const ssize_t offset = cogwheel->iter->first.offset;
         if (min_inited)
         {
-          if (min > itm.iter->first.offset)
+          if (min > offset)
           {
-            min = itm.iter->first.offset;
+            min = offset;
             rcs_cnt = 0;
+            rcs[rcs_cnt ++] = iter_num;
+          }
+          else if (min == offset)
+          {
+            rcs[rcs_cnt ++] = iter_num;
           }
         }
         else
         {
-          min = itm.iter->first.offset;
+          min = offset;
           min_inited = true;
+          rcs[rcs_cnt ++] = iter_num;
         }
-        rcs[rcs_cnt ++] = iter_num;
       }
       iter_num ++;
     }
 
+    if (_G_verbose)
+    {
+      ostringstream ostr;
+      bool delimiter = false;
+      for (cogwheels_t::const_iterator cogwheel = m_cogwheels.begin(), cogwheel_end = m_cogwheels.end(); cogwheel != cogwheel_end; cogwheel ++)
+      {
+        if (!cogwheel->end)
+        {
+          if (delimiter)
+          {
+            ostr << ", ";
+          }
+          ostr << cogwheel->iter->first.offset;
+          delimiter = true;
+        }
+      }
+      LOG_DEBUG("Iters: " << ostr.str() << "; " << rcs_cnt << " points to line " << min);
+    }
     /*
-    Найдено rcs_cnt итераторов, указывающих на одну и ту же строку, номер которой минимален из всех возможных
-    Индексы этих операторов сложены в массив rcs
+    Найдено rcs_cnt итераторов, указывающих на одну и ту же строку, номер которой минимален из всех возможных. Индексы этих итераторов сложены в массив rcs
     */
 
-    const Storage::indexKey &idx = m_iters[rcs[0]].iter->first;
-    const Storage::dataItem &data = m_storage.data()[idx.offset];
 
+    const Storage::indexKey &idx = m_cogwheels[rcs[0]].iter->first;
+    const Storage::dataItem &data = m_storage.data()[idx.offset];
     resultData rd = {data.line, idx.offset, data.raw};
-    resultKey rk = {rcs_cnt, data.rating, 0};
+
 
     /*
-    Текущие значения итераторов слиты в m_results
     Приращение всех "отставших" итераторов
     */
-
     for (size_t pos = 0; pos != rcs_cnt; pos ++)
     {
-      iteratorData &itm = m_iters[rcs[pos]];
+      cogwheel &itm = m_cogwheels[rcs[pos]];
       Storage::index_t::const_iterator &iter = itm.iter;
       const Storage::indexKey key_prev = iter->first;
       while (true)
@@ -128,16 +152,59 @@ void Searcher::search()
       }
     }
 
-    m_results.insert(results_t::value_type(rk, rd));
 
     /*
-    Итераторы сместились, проверить их состояние. Если все достигли конца, завершить цикл
+    Оценить порядок следования лексем в запросе и начислить баллы за наилучшие условия
     */
-
-    bool all_iterators_finished = true;
-    for (iters_t::const_iterator iter = m_iters.begin(), iter_end = m_iters.end(); iter != iter_end; iter ++)
+    bool
+        lexemes_sequential = true //в порядке возрастания
+      , lexemes_successive = true //друг за другом
+    ;
+    coords_t::const_iterator iter = rd.coords.begin();
+    size_t coord_prev = *iter;
+    while (++ iter != rd.coords.end())
     {
-      if (!iter->end)
+      if (*iter <= coord_prev)
+      {
+        lexemes_sequential = lexemes_successive = false;
+        break;
+      }
+      else if (*iter - coord_prev != 1)
+      {
+        lexemes_successive = false;
+      }
+      coord_prev = *iter;
+    }
+
+    uint8_t mark = 0;
+    if (lexemes_successive)
+    {
+      mark += 4;
+    }
+    else if (lexemes_sequential)
+    {
+      mark += 2;
+    }
+    if (data.lexemes == rd.coords.size())
+    {
+      mark += 8;
+    }
+
+
+    /*
+    Сохранить результат
+    */
+    const resultKey rk = {rcs_cnt, data.rating, mark};
+    m_results.insert(results_t::value_type(rk, rd));
+
+
+    /*
+    Проверить состояние итераторов. Если все достигли конца, завершить цикл
+    */
+    bool all_iterators_finished = true;
+    for (cogwheels_t::const_iterator cogwheel = m_cogwheels.begin(), cogwheel_last = m_cogwheels.end(); cogwheel != cogwheel_last; cogwheel ++)
+    {
+      if (!cogwheel->end)
       {
         all_iterators_finished = false;
         break;
@@ -177,12 +244,15 @@ void Searcher::m_init(const std::string &query)
         const Storage::dict_t::const_iterator iter_dict = dict.find(lexeme);
         if (iter_dict != dict.end())
         {
-          const size_t lexeme_id = iter_dict->second.lexeme_id;
+          const size_t
+              lexeme_id = iter_dict->second.lexeme_id
+            , frequency = iter_dict->second.frequency
+          ;
           Storage::indexKey key = {lexeme_id, Storage::first_key};
-          iteratorData itm = {lexeme_id, false, m_storage.index().find(key)};
+          cogwheel itm = {lexeme_id, frequency, false, m_storage.index().find(key)};
           itm.iter ++;
-          m_iters.push_back(itm);
-          LOG_DEBUG("Lexeme `" << lexeme << "`: id = " << lexeme_id << ", freq = " << iter_dict->second.frequency);
+          m_cogwheels.push_back(itm);
+          LOG_DEBUG("Lexeme `" << lexeme << "`: id = " << lexeme_id << ", freq = " << frequency);
         }
         else
         {

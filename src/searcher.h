@@ -11,7 +11,7 @@
 class Searcher
 {
 public:
-  typedef std::vector<uint8_t> coords_t;
+  typedef std::vector<size_t> coords_t;
   struct resultKey
   {
     const size_t
@@ -39,16 +39,19 @@ public:
   Searcher(const Storage &, const std::string &);
 
 private:
-  struct iteratorData
+  struct cogwheel
   {
-    size_t lexeme_id;
+    size_t
+        lexeme_id
+      , frequency
+    ;
     bool end;
     Storage::index_t::const_iterator iter;
   };
-  typedef std::vector<iteratorData> iters_t;
+  typedef std::vector<cogwheel> cogwheels_t;
   const Storage &m_storage;
 
-  iters_t m_iters;
+  cogwheels_t m_cogwheels;
   results_t m_results;
   size_t m_lexemes_counter;
 

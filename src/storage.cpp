@@ -61,7 +61,7 @@ void Storage::dump_index(ostream &os) const
     else
     {
       os
-        << setw(6) << iter->first.lexeme_id << setw(6) << iter->first.offset << setw(4) << static_cast<uint16_t>(iter->second) << endl
+        << setw(6) << iter->first.lexeme_id << setw(6) << iter->first.offset << setw(4) << iter->second << endl
       ;
     }
   }
@@ -72,7 +72,7 @@ void Storage::dump_data(ostream &os) const
   for (data_t::const_iterator iter = m_data.begin(), iter_end = m_data.end(); iter != iter_end; iter ++)
   {
     os
-      << setw(6) <<  iter->line << setw(6) <<  iter->rating << ", `" << iter->url << "`, `" << iter->raw << "`" << endl
+      << setw(6) <<  iter->line << setw(6) << iter->rating << setw(6) << iter->lexemes << ", `" << iter->url << "`, `" << iter->raw << "`" << endl
     ;
   }
 }
@@ -166,7 +166,8 @@ void Storage::m_init(const string &path)
     }
     else if (valid)
     {
-      m_add_item(itm);
+      itm.lexemes = m_split_and_indexate_lexeme(itm.raw.c_str());
+      m_data.push_back(itm);
     }
   }
   myfile.close();
@@ -178,15 +179,10 @@ void Storage::m_init(const string &path)
   );
 }
 
-void Storage::m_add_item(const dataItem &itm)
+size_t Storage::m_split_and_indexate_lexeme(const char *pch)
 {
-  uint8_t coord = 0;
-  const char
-      *pch = itm.raw.c_str()
-    , *pch_start = NULL
-  ;
-
-  const size_t offset = m_data.size();
+  size_t coord = 0;
+  const char *pch_start = NULL;
 
   do
   {
@@ -215,7 +211,7 @@ void Storage::m_add_item(const dataItem &itm)
         {
           m_index.insert(index_t::value_type(key, 0));
         }
-        indexKey key2 = {lexeme_id, offset};
+        indexKey key2 = {lexeme_id, m_data.size()};
         m_index.insert(index_t::value_type(key2, coord));
 
         pch_start = NULL;
@@ -229,5 +225,5 @@ void Storage::m_add_item(const dataItem &itm)
   }
   while (*pch ++);
 
-  m_data.push_back(itm);
+  return coord;
 }
