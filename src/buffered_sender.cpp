@@ -28,6 +28,7 @@ void BufferedSender::m_on_send(const int fd)
       if (errno_copy != EAGAIN)
       {
         LOG_ERROR("\"send\" failed, " << errno_copy << ", \"" << strerror(errno_copy) << "\"");
+        failure(errno_copy);
       }
       break;
     }
@@ -45,6 +46,14 @@ BufferedSender::BufferedSender(LibevWrapper &ev)
   : m_write_handler(NULL)
   , mEventLoop(ev)
 {
+}
+
+BufferedSender::~BufferedSender()
+{
+  if (m_write_handler)
+  {
+    mEventLoop.stop_io_handler(m_write_handler);
+  }
 }
 
 void BufferedSender::cash(const char *data, const size_t length)
@@ -75,6 +84,7 @@ void BufferedSender::send(const int fd, const char *data, const size_t length)
     else if (length_sent < 0)
     {
       LOG_ERROR("\"send\" failed, " << errno_copy << ", \"" << strerror(errno_copy) << "\"");
+      failure(errno_copy);
     }
   }
   else
@@ -96,11 +106,12 @@ void BufferedSender::send_cashed(const int fd)
     {
       mBuffer.advance(length_sent);
       sent(length_sent);
-      if (length_sent == length)
-      {
-        finished();
-      }
     }
+    if (mBuffer.empty())
+    {
+      finished();
+    }
+
     if ((length_sent < 0 && errno_copy == EAGAIN || length_sent > 0 && length_sent < length))
     {
       m_write_handler = mEventLoop.init_io_writer(this, reinterpret_cast<LibevWrapper::cbm_io_t>(&BufferedSender::m_on_send), fd);
@@ -109,6 +120,7 @@ void BufferedSender::send_cashed(const int fd)
     else if (length_sent < 0)
     {
       LOG_ERROR("\"send\" failed, " << errno_copy << ", \"" << strerror(errno_copy) << "\"");
+      failure(errno_copy);
       break;
     }
   }

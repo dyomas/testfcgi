@@ -33,7 +33,7 @@ protected:
   LibevWrapper &m_ev;
 
 private:
-  void close(handlers_t::const_iterator iter);
+  void m_close(handlers_t::const_iterator iter);
   void m_on_receive_client(const int);
   void m_on_receive_server(const int);
   bool m_running;

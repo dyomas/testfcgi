@@ -12,6 +12,11 @@ Echo::Echo(LibevWrapper &ev)
 {
 }
 
+void Echo::failure(const int err)
+{
+  
+}
+
 void Echo::sent(const size_t len)
 {
   cout

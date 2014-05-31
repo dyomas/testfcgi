@@ -35,10 +35,6 @@ void SendBuffer::mClear()
   mItemFirst = mItemLast = NULL;
 }
 
-SendBuffer::SendBuffer(const SendBuffer &)
-{
-}
-
 SendBuffer::SendBuffer()
   : mItemFirst(NULL)
   , mItemLast(NULL)

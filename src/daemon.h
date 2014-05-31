@@ -3,18 +3,23 @@
 
 
 #include <stdint.h>
+#include <map>
+
 #include "socket_async_tcp_server.h"
-#include "buffered_sender.h"
 
+class Connection;
 
-class Daemon: public SocketAsyncTCPServer, private BufferedSender
+class Daemon: public SocketAsyncTCPServer
 {
+  Daemon (const Daemon &);
+  Daemon &operator= (const Daemon &);
+
+  typedef std::map<int, Connection *> connections_t;
+  connections_t m_connections;
 
 public:
   Daemon(LibevWrapper &ev);
-
-  virtual void sent(const size_t);
-  virtual void finished();
+  ~Daemon();
 
   virtual void connected(const int /*fd*/);
   virtual void disconnected(const int /*fd*/, const SocketAsyncBase::disconnector);

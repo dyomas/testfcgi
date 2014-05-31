@@ -38,7 +38,7 @@ void SocketAsyncTCPServer::startup_inet(const uint16_t port)
   }
 }
 
-void SocketAsyncTCPServer::close(handlers_t::const_iterator iter)
+void SocketAsyncTCPServer::m_close(handlers_t::const_iterator iter)
 {
   m_ev.stop_io_handler(iter->second);
   const int fd = iter->first;
@@ -51,13 +51,18 @@ void SocketAsyncTCPServer::close(handlers_t::const_iterator iter)
   {
     m_fd_main = -1;
   }
+  else
+  {
+    disconnected(fd, SocketAsyncBase::dcnSelf);
+  }
 }
 
 void SocketAsyncTCPServer::shutdown()
 {
   for (handlers_t::const_iterator iter = m_handlers.begin(); iter != m_handlers.end(); ++iter)
-    close(iter);
-
+  {
+    m_close(iter);
+  }
   m_handlers.clear();
   m_running = false;
 }
@@ -77,7 +82,7 @@ bool SocketAsyncTCPServer::close(const int fd)
   handlers_t::const_iterator iter = m_handlers.find(fd);
   if (iter != m_handlers.end())
   {
-    close(iter);
+    m_close(iter);
     m_handlers.erase(fd);
     return true;
   }

@@ -13,6 +13,7 @@ class Echo: public SocketAsyncTCPServer, private BufferedSender
 public:
   Echo(LibevWrapper &ev);
 
+  virtual void failure(const int);
   virtual void sent(const size_t);
   virtual void finished();
 
