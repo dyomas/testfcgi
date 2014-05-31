@@ -24,17 +24,25 @@ template <class T> inline void FCGIResponse::m_write(const int socket, const T &
       data_portion_len = m_max_data_length;
     }
 
+    const size_t padding = (data_portion_len % 8) ? (8 - data_portion_len % 8) : 0;
     m_fcgi_header.contentLengthB1 = data_portion_len >> 8;
     m_fcgi_header.contentLengthB0 = data_portion_len & 0xff;
+    m_fcgi_header.paddingLength = padding;
 
     m_sender->cash(reinterpret_cast<const char *>(&m_fcgi_header), sizeof(FCGI_Header));
-    m_sender->cash(reinterpret_cast<const char *>(&*iter), data_portion_len);
+    if (padding)
+    {
+      string tmp(reinterpret_cast<const char *>(&*iter), data_portion_len);
+      tmp.append(padding, '\0');
+      m_sender->cash(tmp.c_str(), tmp.length());
+    }
+    else
+    {
+      m_sender->cash(reinterpret_cast<const char *>(&*iter), data_portion_len);
+    }
 
     iter += data_portion_len;
   }
-
-  m_fcgi_header.contentLengthB1 = m_fcgi_header.contentLengthB0 = 0;
-  m_sender->cash(reinterpret_cast<const char *>(&m_fcgi_header), sizeof(FCGI_Header));
 }
 
 void FCGIResponse::setId(const uint16_t id)

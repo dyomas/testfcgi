@@ -9,8 +9,9 @@
 
 using namespace std;
 
-Daemon::Daemon(LibevWrapper &ev)
+Daemon::Daemon(LibevWrapper &ev, const string &data)
   : SocketAsyncTCPServer(ev)
+  , m_storage(data)
 {
 }
 
@@ -32,7 +33,7 @@ void Daemon::connected(const int fd)
   {
     LOG_ERROR("Connection on fd " << fd << " already exists, it's leaked!");
   }
-  m_connections[fd] = new Connection(fd, m_ev, *this);
+  m_connections[fd] = new Connection(fd, m_ev, *this, m_storage);
 }
 
 void Daemon::disconnected(const int fd, const SocketAsyncBase::disconnector dc)

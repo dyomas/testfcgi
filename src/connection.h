@@ -12,17 +12,19 @@
 class LibevWrapper;
 class FCGIRequest;
 class SocketAsyncTCPServer;
+class Storage;
 
 class Connection: private BufferedSender
 {
   const int m_fd;
   SocketAsyncTCPServer &m_server;
+  const Storage &m_storage;
   std::string m_input_buffer;
 
   void m_response(std::ostream &, const FCGIRequest &);
 
 public:
-  Connection(const int, LibevWrapper &ev, SocketAsyncTCPServer &);
+  Connection(const int, LibevWrapper &ev, SocketAsyncTCPServer &, const Storage &);
 
   virtual void failure(const int);
   virtual void sent(const size_t);

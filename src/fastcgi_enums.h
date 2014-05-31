@@ -1,20 +1,11 @@
-// $Date: 2010-02-11 01:13:55 +0300 (Thu, 11 Feb 2010) $
-// $Revision: 404 $
-// $Author: saltaev $
-// $HeadURL: file:///spool/SVN/v256ru/trunk/include/fastcgi_enums.h $
-
 #ifndef __fastcgi_enums_h__
 #define __fastcgi_enums_h__
-
-//About comments
 
 #include <sstream>
 
 #include "fastcgi_common.h"
 
 using namespace std;
-
-//#define's
 
 enum fcgiRequestTypes
 {

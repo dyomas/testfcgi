@@ -33,7 +33,7 @@ void Searcher::dump_results(ostream &os) const
   {
     const resultKey &key = iter->first;
     const resultData &value = iter->second;
-    os << setw(3) << key.cnt << setw(6) << key.raiting << setw(6) << static_cast<uint16_t>(key.mark) << ' ' << value.raw << " (" << value.line << "/" << value.offset << ", [";
+    os << setw(8) << key.cnt << setw(8) << key.raiting << setw(8) << static_cast<uint16_t>(key.mark) << ' ' << m_storage.data()[value.offset].raw << " (" << value.line << "/" << value.offset << ", [";
     bool delimiter = false;
     for (coords_t::const_iterator iter_coord = value.coords.begin(), iter_coord_end = value.coords.end(); iter_coord != iter_coord_end; iter_coord ++)
     {
@@ -46,6 +46,52 @@ void Searcher::dump_results(ostream &os) const
     }
     os
       << "])" << endl
+    ;
+  }
+}
+
+void Searcher::dump_results_pre(ostream &os) const
+{
+  const Storage::data_t &datas = m_storage.data();
+
+  os
+    << "lexemes                       |rating|relevan|rownum(-offset)|text, url" << endl
+  ;
+
+  for (results_t::const_reverse_iterator iter = m_results.rbegin(), iter_end = m_results.rend(); iter != iter_end; iter ++)
+  {
+    const resultKey &key = iter->first;
+    const resultData &value = iter->second;
+    const Storage::dataItem &data = datas[value.offset];
+
+    ostringstream ldescr;
+    bool delimiter = false;
+    ldescr << key.cnt << ' ' << '{';
+    for (coords_t::const_iterator iter_coord = value.coords.begin(), iter_coord_end = value.coords.end(); iter_coord != iter_coord_end; iter_coord ++)
+    {
+      if (delimiter)
+      {
+        ldescr << ' ';
+      }
+      ldescr << *iter_coord;
+      delimiter = true;
+    }
+    ldescr << '}';
+
+    ostringstream pdescr;
+    pdescr << value.line;
+    if (value.line > value.offset)
+    {
+      pdescr << " (-" << (value.line - value.offset) << ")";
+    }
+
+    os
+      << setw(30) << left << ldescr.str() << right
+      << setw(7) << key.raiting
+      << setw(8) << static_cast<uint16_t>(key.mark)
+      << setw(16) << pdescr.str()
+      << ' ' << data.raw << ", " << data.url
+      << endl
     ;
   }
 }
@@ -126,7 +172,7 @@ void Searcher::search()
 
     const Storage::indexKey &idx = m_cogwheels[rcs[0]].iter->first;
     const Storage::dataItem &data = m_storage.data()[idx.offset];
-    resultData rd = {data.line, idx.offset, data.raw};
+    resultData rd = {data.line, idx.offset};
 
 
     /*
@@ -216,6 +262,8 @@ void Searcher::search()
       break;
     }
   }
+
+  LOG_DEBUG("Found records: " << m_results.size());
 }
 
 Searcher::Searcher(const Storage &storage, const string &query)

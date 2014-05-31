@@ -23,7 +23,6 @@ public:
   struct resultData
   {
     const size_t line, offset;
-    const std::string raw;
     coords_t coords;
   };
 
@@ -33,6 +32,7 @@ public:
   size_t lexemes_found() const;
   const results_t &results() const;
   void dump_results(std::ostream &) const;
+  void dump_results_pre(std::ostream &) const;
 
   void search();
 

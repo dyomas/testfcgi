@@ -26,6 +26,7 @@ const size_t buff_size_default = 32;
 const string
     mode_default = "go"
   , data_part_default = "data"
+  , data_default = "sample_data.txt"
 ;
 
 bool _G_verbose = false;
@@ -37,7 +38,7 @@ void usage(ostream &os, const char *me)
     << "Test FastCGI daemon" << endl
     << "Usage: " << me << " [Options] [STRINGS]" << endl
     << "  -P - port, mode specific, default " << port_default << endl
-    << "  -S - CSV-file with data to be searched" << endl
+    << "  -S - CSV-file with data to be searched, default `" << data_default << "`" << endl
     << "  -b - server buffer size, default " << SocketAsyncBase::buff_size_default << endl
     << "  -l - server backlog length, default " << SocketAsyncBase::backlog_default << endl
     << "  -p - part of data to dump, default `" << data_part_default << "`" << endl
@@ -76,12 +77,13 @@ static uint32_t c_string_to_uint(const char *src)
     }
     throw runtime_error(ostr.str());
   }
+  return ret_val;
 }
 
-void go()
+void go(const string &data)
 {
   LibevWrapper ev;
-  Daemon daemon(ev);
+  Daemon daemon(ev, data);
 
   daemon.startup_inet(_G_port);
   ev.run();
@@ -139,7 +141,7 @@ int main(int argc, char *argv[])
   string
       mode = mode_default
     , data_part = data_part_default
-    , data
+    , data = data_default
   ;
   strings_t strings;
 
@@ -185,7 +187,7 @@ int main(int argc, char *argv[])
 
     if (mode == mode_default)
     {
-      go();
+      go(data);
     }
     else if (mode == "echo")
     {

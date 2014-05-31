@@ -6,6 +6,7 @@
 #include <map>
 
 #include "socket_async_tcp_server.h"
+#include "storage.h"
 
 class Connection;
 
@@ -14,11 +15,12 @@ class Daemon: public SocketAsyncTCPServer
   Daemon (const Daemon &);
   Daemon &operator= (const Daemon &);
 
+  const Storage m_storage;
   typedef std::map<int, Connection *> connections_t;
   connections_t m_connections;
 
 public:
-  Daemon(LibevWrapper &ev);
+  Daemon(LibevWrapper &ev, const std::string &);
   ~Daemon();
 
   virtual void connected(const int /*fd*/);

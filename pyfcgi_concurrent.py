@@ -3,6 +3,7 @@
 
 import socket
 import os;
+import time;
 import getopt;
 import sys;
 import pyfcgi
@@ -17,6 +18,8 @@ def run():
   global query, host, port, stdin, dump
 
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+  print "===", host, port
   s.connect((host, port))
 
   b = pyfcgi.SocketBuffer()
@@ -36,6 +39,7 @@ def run():
     b.dump_output()
   b.write(s.fileno())
 
+  time.sleep(3)
   b.read(s.fileno())
   if dump:
     b.dump_input()
@@ -64,7 +68,7 @@ Options are:
   -P (--port)          - port to connect, default `%(port)i`
   -S (--stdin)         - text to send as stdin, default `Lorem ipsum` classic placeholder
   -d (--dump)          - dump raw data
-  -h                   - show help message and exit""" %{"query":query, "host": host, "port": port}
+  -h (--help)          - show help message and exit""" %{"query":query, "host": host, "port": port}
 
 
 def main():
@@ -78,10 +82,10 @@ def main():
       sys.exit()
     elif opt in ("-Q", "--query"):
       query = arg
-    elif host in ("-P", "--host"):
+    elif opt in ("-H", "--host"):
       host = arg
     elif opt in ("-P", "--port"):
-      port = arg
+      port = int(arg)
     elif opt in ("-S", "--stdin"):
       stdin = arg
     elif opt in ("-d", "--dump"):

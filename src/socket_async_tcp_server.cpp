@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <stdexcept>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "logger.h"
 #include "libev_wrapper.h"
@@ -31,6 +33,8 @@ bool SocketAsyncTCPServer::is_running() const
 
 void SocketAsyncTCPServer::startup_inet(const uint16_t port)
 {
+  LOG_DEBUG("Try listen port " << port);
+
   if (!m_running && (m_fd_main = SocketAsyncBase::init_server_inet_socket(port)) >= 0)
   {
     m_handlers[m_fd_main] = m_ev.init_io_reader(this, reinterpret_cast<LibevWrapper::cbm_io_t>(&SocketAsyncTCPServer::m_on_receive_server), m_fd_main);
@@ -131,6 +135,18 @@ void SocketAsyncTCPServer::m_on_receive_server(const int fd)
   const int fd_new = ::accept(fd, NULL, NULL);
   if (fd_new >= 0)
   {
+    int res;
+    if ((res = fcntl (fd_new, F_GETFL)) != -1)
+    {
+      res = fcntl (fd_new, F_SETFL, res | O_NONBLOCK);
+    }
+
+    if (res < 0)
+    {
+      const int errno_copy = errno;
+      LOG_ERROR("\"fcntl\" failed for fd " << fd_new << ", " << errno_copy << ", " << strerror(errno_copy));
+    }
+
     connected(fd_new);
     m_handlers[fd_new] = m_ev.init_io_reader(this, reinterpret_cast<LibevWrapper::cbm_io_t>(&SocketAsyncTCPServer::m_on_receive_client), fd_new);
   }

@@ -1,8 +1,3 @@
-// $Date: 2010-02-11 01:13:55 +0300 (Thu, 11 Feb 2010) $
-// $Revision: 404 $
-// $Author: saltaev $
-// $HeadURL: file:///spool/SVN/v256ru/trunk/cpp/fastcgi_enums.cpp $
-
 #include "fastcgi_enums.h"
 
 ostream &operator << (ostream &os, const fcgiRequestTypes frt)
