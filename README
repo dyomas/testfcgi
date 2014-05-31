@@ -1,0 +1,18 @@
+Сборка и запуск:
+
+  git clone http://github.com/dyomas/testfcgi.git
+  cd testfcgi/
+  cmake .
+  make
+  ./daemon
+
+  По умолчанию:
+    загружает файлик sample_data.txt
+    принимает входящие TCP-соединения на порту 1024
+    через установленное подключение по протоколам HTTP -> FastCGI обрабатывает
+      поисковые запросы; запросом является деэкранированный параметр QUERY_STRING
+      результат помещается в тег HTML/pre; Content-type: text/html
+
+  Описание прочих возможностей доступны по ключу -h:
+
+    ./daemon -h
