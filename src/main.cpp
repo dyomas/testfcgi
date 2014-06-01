@@ -46,10 +46,10 @@ void usage(ostream &os, const char *me)
     << "    dict - lexemes list" << endl
     << "    index - coordinate information" << endl
     << "  -m - mode (test name), default `" << mode_default << "`:" << endl
-    << "    " << mode_default << " - run daemon, (-Pbl)" << endl
-    << "    echo - run simple echo client, (-Pbl)" << endl
-    << "    dump - dump search data, (-Sp)" << endl
-    << "    search - run searcher locally, (-S,<STRINGS>)" << endl
+    << "    " << mode_default << " - run daemon [-PSbl]" << endl
+    << "    echo - run simple echo client [-Pbl]" << endl
+    << "    dump - dump search data [-Sp]" << endl
+    << "    search - run searcher locally [-S] <STRINGS>" << endl
     << "  -v - verbose execution" << endl
     << "  -h - print this help and exit" << endl
   ;

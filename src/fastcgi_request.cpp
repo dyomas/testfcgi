@@ -95,6 +95,11 @@ const string FCGIRequest::InsufficientData::m_describe(const uint16_t obtained, 
   return ostr.str();
 }
 
+FCGIRequest::InsufficientData::InsufficientData()
+  : underflow_error("Insufficient data length")
+{
+}
+
 FCGIRequest::InsufficientData::InsufficientData(const uint16_t obtained, const uint16_t required)
   : underflow_error(m_describe(obtained, required))
 {
@@ -135,6 +140,7 @@ const string &FCGIRequest::stdin() const
 
 void FCGIRequest::parse(const uint8_t *begin, const uint8_t *end)
 {
+  bool cin_obtained = false;
   uint16_t
       len
     , id
@@ -175,6 +181,7 @@ void FCGIRequest::parse(const uint8_t *begin, const uint8_t *end)
         begin = begin_data + len + pheader->paddingLength;
         break;
       case FCGI_STDIN:
+        cin_obtained = true;
         if (!len)
         {
           begin = begin_data;
@@ -193,5 +200,10 @@ void FCGIRequest::parse(const uint8_t *begin, const uint8_t *end)
           throw runtime_error(ostr.str());
         }
     }
+  }
+
+  if (!cin_obtained)
+  {
+    throw InsufficientData();
   }
 }

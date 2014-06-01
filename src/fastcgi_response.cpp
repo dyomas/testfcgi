@@ -125,24 +125,12 @@ void FCGIResponse::writeOut(const int socket)
     }
     else
     {
-      if (m_source_type & stHeaderGenerator)
-      {
-      }
-      else if (m_source_type & stHeaderFile)
-      {
-      }
-      else if (m_source_type & stHeaderString)
+      if (m_source_type & stHeaderString)
       {
         m_write(socket, m_str1);
       }
 
-      if (m_source_type & stContentGenerator)
-      {
-      }
-      else if (m_source_type & stContentFile)
-      {
-      }
-      else if (m_source_type & stContentString)
+      if (m_source_type & stContentString)
       {
         m_write(socket, m_str2);
       }
@@ -152,6 +140,7 @@ void FCGIResponse::writeOut(const int socket)
   m_fcgi_header.type = FCGI_END_REQUEST;
   m_fcgi_header.contentLengthB1 = 0;
   m_fcgi_header.contentLengthB0 = sizeof(FCGI_EndRequestBody);
+  m_fcgi_header.paddingLength = 0;
 
   m_end_request.appStatusB3 = (m_status >> 24) & 0xff;
   m_end_request.appStatusB2 = (m_status >> 16) & 0xff;

@@ -20,6 +20,7 @@ public:
   {
     static const std::string m_describe(const uint16_t, const uint16_t);
   public:
+    InsufficientData();
     InsufficientData(const uint16_t, const uint16_t);
   };
 

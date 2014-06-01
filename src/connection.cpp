@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 
@@ -154,7 +155,16 @@ void Connection::sent(const size_t len)
 
 void Connection::finished()
 {
-  LOG_DEBUG("Sent finished");
+  LOG_DEBUG("Sent finished, switch to locking mode and close");
+
+  char buff[SocketAsyncBase::buff_size];
+  const ssize_t len = ::recv(m_fd, buff, SocketAsyncBase::buff_size, 0);
+
+  if (len > 0)
+  {
+    LOG_ERROR("There is " << len << " input bytes forgotten\n    This may cause abnormal behaviour!\n    Check protocol specification and fix this problem!");
+  }
+
   m_server.close(m_fd);
 }
 
