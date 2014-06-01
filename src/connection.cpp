@@ -114,13 +114,13 @@ void Connection::m_response(ostream &os, const FCGIRequest &request)
     else
     {
       const string queryUnescaped = unescape(query);
-      LOG_DEBUG("Query unescaped: `" << query << "` -> `" << queryUnescaped << "`");
       Searcher searcher(m_storage, queryUnescaped);
+      LOG_DEBUG("Query: `" << query << "` -> `" << queryUnescaped << "` -> `" << searcher.query_coiffured() << "`");
       searcher.search();
       if (searcher.results().size())
       {
         os
-          << "Запрос `" << queryUnescaped << "`, нашлось записей: " << searcher.results().size() << endl
+          << "Запрос `" << searcher.query_coiffured() << "`, нашлось записей: " << searcher.results().size() << endl
           << endl
         ;
         searcher.dump_results_pre(os);
@@ -155,14 +155,13 @@ void Connection::sent(const size_t len)
 
 void Connection::finished()
 {
-  LOG_DEBUG("Sent finished, switch to locking mode and close");
+  LOG_DEBUG("Sent finished, closing");
 
-  char buff[SocketAsyncBase::buff_size];
-  const ssize_t len = ::recv(m_fd, buff, SocketAsyncBase::buff_size, 0);
-
+  char ch;
+  const ssize_t len = ::recv(m_fd, &ch, 1, 0);
   if (len > 0)
   {
-    LOG_ERROR("There is " << len << " input bytes forgotten\n    This may cause abnormal behaviour!\n    Check protocol specification and fix this problem!");
+    LOG_ERROR("There is at least " << len << " input bytes forgotten\n    This may cause abnormal behaviour!\n    Check protocol specification and fix this problem!");
   }
 
   m_server.close(m_fd);

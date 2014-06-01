@@ -31,6 +31,7 @@ public:
   size_t lexemes_total() const;
   size_t lexemes_found() const;
   const results_t &results() const;
+  const std::string &query_coiffured() const;
   void dump_results(std::ostream &) const;
   void dump_results_pre(std::ostream &) const;
 
@@ -51,6 +52,7 @@ private:
   typedef std::vector<cogwheel> cogwheels_t;
   const Storage &m_storage;
 
+  std::string m_query_coiffured;
   cogwheels_t m_cogwheels;
   results_t m_results;
   size_t m_lexemes_counter;

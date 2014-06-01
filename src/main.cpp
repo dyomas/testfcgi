@@ -16,6 +16,7 @@
 #include "echo.h"
 #include "storage.h"
 #include "searcher.h"
+#include "morph_parser.h"
 #include "socket_async_base.h"
 
 using namespace std;
@@ -31,6 +32,7 @@ const string
 
 bool _G_verbose = false;
 uint16_t _G_port = port_default;
+MorphParser _G_morph_parser;
 
 void usage(ostream &os, const char *me)
 {
@@ -50,6 +52,7 @@ void usage(ostream &os, const char *me)
     << "    echo - run simple echo client [-Pbl]" << endl
     << "    dump - dump search data [-Sp]" << endl
     << "    search - run searcher locally [-S] <STRINGS>" << endl
+    << "    morph - morphological parser locally <STRINGS>" << endl
     << "  -v - verbose execution" << endl
     << "  -h - print this help and exit" << endl
   ;
@@ -134,6 +137,19 @@ void search(const strings_t &queries, const string &data)
   }
 }
 
+void morph(const strings_t &words)
+{
+  size_t base_len, suffix_len;
+
+  for (strings_t::const_iterator iter = words.begin(), iter_end = words.end(); iter != iter_end; iter ++)
+  {
+    _G_morph_parser.split(base_len, suffix_len, &*iter->begin(), &*iter->end());
+    cout
+      << "`" << *iter << "`: " << base_len << " + " << suffix_len << endl
+    ;
+  }
+}
+
 int main(int argc, char *argv[])
 {
   int ret_val = EXIT_FAILURE;
@@ -200,6 +216,10 @@ int main(int argc, char *argv[])
     else if (mode == "search")
     {
       search(strings, data);
+    }
+    else if (mode == "morph")
+    {
+      morph(strings);
     }
     else
     {

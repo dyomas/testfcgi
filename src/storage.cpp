@@ -8,9 +8,11 @@
 
 #include "logger.h"
 #include "storage.h"
+#include "morph_parser.h"
 
 using namespace std;
 
+extern MorphParser _G_morph_parser;
 const ssize_t Storage::first_key = -1;
 
 bool operator < (const Storage::indexKey &left, const Storage::indexKey &right)
@@ -190,7 +192,12 @@ size_t Storage::m_split_and_indexate_lexeme(const char *pch)
     {
       if (pch_start)
       {
-        const string lexeme(pch_start, pch);
+        size_t
+            base_len
+          , suffix_len
+        ;
+        _G_morph_parser.split(base_len, suffix_len, pch_start, pch);
+        const string lexeme(pch_start, pch - suffix_len);
         size_t lexeme_id;
         dict_t::iterator iter_dict = m_dict.find(lexeme);
 

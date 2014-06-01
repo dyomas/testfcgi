@@ -4,8 +4,11 @@
 
 #include "logger.h"
 #include "searcher.h"
+#include "morph_parser.h"
 
 using namespace std;
+
+extern MorphParser _G_morph_parser;
 
 bool operator < (const Searcher::resultKey &left, const Searcher::resultKey &right)
 {
@@ -25,6 +28,11 @@ size_t Searcher::lexemes_found() const
 const Searcher::results_t &Searcher::results() const
 {
   return m_results;
+}
+
+const string &Searcher::query_coiffured() const
+{
+  return m_query_coiffured;
 }
 
 void Searcher::dump_results(ostream &os) const
@@ -273,7 +281,7 @@ Searcher::Searcher(const Storage &storage, const string &query)
   m_init(query);
 }
 
-void Searcher::m_init(const std::string &query)
+void Searcher::m_init(const string &query)
 {
   const char
       *pch = query.c_str()
@@ -287,7 +295,23 @@ void Searcher::m_init(const std::string &query)
     {
       if (pch_start)
       {
-        const string lexeme(pch_start, pch);
+        size_t
+            base_len
+          , suffix_len
+        ;
+        _G_morph_parser.split(base_len, suffix_len, pch_start, pch);
+        if (m_query_coiffured.length())
+        {
+          m_query_coiffured += ' ';
+        }
+        m_query_coiffured.append(pch_start, base_len);
+        if (suffix_len)
+        {
+          m_query_coiffured += '|';
+          m_query_coiffured.append(&pch_start[base_len], suffix_len);
+        }
+
+        const string lexeme(pch_start, pch - suffix_len);
         const Storage::dict_t &dict = m_storage.dict();
         const Storage::dict_t::const_iterator iter_dict = dict.find(lexeme);
         if (iter_dict != dict.end())

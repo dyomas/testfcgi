@@ -1,7 +1,7 @@
 #include <string.h>
 #include <iostream>
-#include "daemon.h"
 
+#include "daemon.h"
 #include "libev_wrapper.h"
 #include "connection.h"
 #include "logger.h"
